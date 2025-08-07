@@ -58,10 +58,10 @@ private:
     long _getRawPulseDuration();
 
     // --- Kalman Filter Variables ---
-    float _kalman_Q = 0.01; // Process noise
-    float _kalman_R = 0.1;  // Measurement noise
-    float _kalman_P = 1.0;  // Estimation error
-    float _kalman_x = 0.0;  // Initial value
+    float _kalman_Q = 0.01;  // Process noise (was 0.01, let's keep it)
+    float _kalman_R = 0.25;  // Measurement noise (was 0.1, now tuned)
+    float _kalman_P = 1.0;   // Estimation error
+    float _kalman_x = 0.0;   // Initial value
     bool _kalman_initialized = false;
 };
 
