@@ -119,23 +119,6 @@ void loop() {
     delay(500);
 }
 
----
----
-## 💻 Example Output
-
-**Mode 1 – Distance Measurement**  
-Real-time distance readings in the selected unit (Centimeters or Inches):
-Distance: 25.42 cm
-Distance: 25.38 cm
-Distance: 25.41 cm
-**Mode 2 – Object Detection (30 cm threshold)**  
-Indicates whether an object is within the specified detection range:
-Checking for object within 30 cm... OBJECT DETECTED ✔
-Checking for object within 30 cm... No object found ✖
-
-**Mode 3 – Moving Average**  
-Compares the raw single measurement with the filtered moving average reading:
-Raw: 25.40 cm | Filtered: 25.38 cm
 
 ---
 
