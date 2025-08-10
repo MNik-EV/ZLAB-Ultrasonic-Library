@@ -1,6 +1,10 @@
+/**
+ * @file ZlabUltrasonic.cpp
+ * @brief Implementation file for the ZlabUltrasonic library.
+ */
 #include "ZlabUltrasonic.h"
-#include "esp32-hal-timer.h"
 
+// The constructor sets up the pins and default values.
 ZlabUltrasonic::ZlabUltrasonic(uint8_t trigPin, uint8_t echoPin) {
     _trigPin = trigPin;
     _echoPin = echoPin;
@@ -8,71 +12,46 @@ ZlabUltrasonic::ZlabUltrasonic(uint8_t trigPin, uint8_t echoPin) {
     pinMode(_trigPin, OUTPUT);
     pinMode(_echoPin, INPUT);
 
-    setTemperature(20.0); // Default temperature
-    _currentStatus = Status::OK;
+    // Set a default temperature for initial calculations.
+    setTemperature(20.0);
 }
 
+// Sets the temperature for accurate calculations.
 void ZlabUltrasonic::setTemperature(float tempC) {
-    _speedOfSound = (331.3 + 0.606 * tempC) / 10000.0; // cm/µs
+    _temperatureC = tempC;
 }
 
-void ZlabUltrasonic::setKalmanParameters(float Q, float R) {
-    _kalman_Q = Q;
-    _kalman_R = R;
-}
-
-void ZlabUltrasonic::setOutlierRejection(int windowSize, float threshold) {
-    _reading_window_size = windowSize;
-    _outlier_threshold = threshold;
-}
-
-long ZlabUltrasonic::_getRawPulseDuration_internal() {
+// Private function to get the raw pulse duration from the sensor.
+long ZlabUltrasonic::_getRawPulseDuration() {
+    // Send a 10 microsecond pulse to trigger the sensor.
     digitalWrite(_trigPin, LOW);
     delayMicroseconds(2);
     digitalWrite(_trigPin, HIGH);
     delayMicroseconds(10);
     digitalWrite(_trigPin, LOW);
 
-    unsigned long startTime_us = esp_timer_get_time();
-    // 30ms timeout, corresponds to ~510cm, beyond sensor's max range
-    unsigned long timeout_us = startTime_us + 30000; 
-
-    while (digitalRead(_echoPin) == LOW) {
-        if (esp_timer_get_time() >= timeout_us) {
-            _currentStatus = Status::TIMEOUT_ERROR;
-            return 0;
-        }
-    }
-    startTime_us = esp_timer_get_time();
-
-    while (digitalRead(_echoPin) == HIGH) {
-        if (esp_timer_get_time() >= timeout_us) {
-            _currentStatus = Status::TIMEOUT_ERROR;
-            return 0;
-        }
-    }
-    
-    return esp_timer_get_time() - startTime_us;
+    // Read the echo pulse duration.
+    // pulseIn() waits for the pin to go HIGH, starts timing, then waits for the
+    // pin to go LOW and stops timing. The duration is returned in microseconds.
+    // A timeout of 30,000µs (30ms) is used to prevent blocking indefinitely.
+    return pulseIn(_echoPin, HIGH, 30000);
 }
 
-long ZlabUltrasonic::getRawPulseDuration() {
-    return _getRawPulseDuration_internal();
-}
-
+// Calculates and returns the distance.
 float ZlabUltrasonic::getDistance(Unit unit) {
-    long duration = _getRawPulseDuration_internal();
+    long duration = _getRawPulseDuration();
+
+    // If duration is 0, it indicates a timeout (error).
     if (duration == 0) {
-        return -1.0f; // Return negative on error
+        return -1.0f;
     }
 
-    float distance_cm = (duration * _speedOfSound) / 2.0;
+    // Calculate the speed of sound in meters/second based on temperature.
+    float speedOfSound_mps = 331.3 + 0.606 * _temperatureC;
 
-    // Range check
-    if (distance_cm < 2.0 || distance_cm > 400.0) {
-        _currentStatus = Status::OUT_OF_RANGE;
-    } else {
-        _currentStatus = Status::OK;
-    }
+    // Convert duration (µs) to seconds and calculate distance in cm.
+    // Formula: distance = (duration * speed_of_sound) / 2
+    float distance_cm = (duration * 0.000001 * speedOfSound_mps * 100) / 2.0;
 
     if (unit == Unit::INCH) {
         return distance_cm / 2.54;
@@ -80,71 +59,41 @@ float ZlabUltrasonic::getDistance(Unit unit) {
     return distance_cm;
 }
 
+// Checks if an object is within the specified threshold.
 bool ZlabUltrasonic::isObjectDetected(float threshold_cm) {
     float currentDistance = getDistance(Unit::CM);
-    if (getStatus() != Status::OK) {
-        return false;
+
+    // Return true only if the reading is valid ( > 0) and within the threshold.
+    if (currentDistance > 0 && currentDistance <= threshold_cm) {
+        return true;
     }
-    return currentDistance <= threshold_cm;
+    return false;
 }
 
-float ZlabUltrasonic::getFilteredDistance() {
-    float measurement = getDistance(Unit::CM);
+// Calculates a stable distance reading by averaging over 100ms.
+float ZlabUltrasonic::getMovingAverageDistance(int sample_interval_ms) {
+    std::vector<float> readings;
+    unsigned long startTime = millis();
+    const int sampling_duration_ms = 100; // Total duration to read samples.
 
-    if (getStatus() == Status::TIMEOUT_ERROR) {
-        return _kalman_initialized ? _kalman_x : -1.0f;
-    }
-    
-    if (getStatus() == Status::OUT_OF_RANGE) {
-        // If out of range, don't update the filter with this invalid value.
-        // Return the last known stable value.
-        return _kalman_initialized ? _kalman_x : -1.0f;
-    }
-
-    // Outlier Rejection & Intelligent Reset Logic
-    if (_kalman_initialized && _lastReadings.size() >= _reading_window_size) {
-        float sum = 0;
-        for (float r : _lastReadings) sum += r;
-        float avg = sum / _lastReadings.size();
-
-        if (abs(measurement - avg) > _outlier_threshold) {
-            _consecutive_rejections++;
-            if (_consecutive_rejections >= 3) {
-                _kalman_initialized = false;
-                _lastReadings.clear();
-                _consecutive_rejections = 0;
-            } else {
-                return _kalman_x; // Ignore temporary outlier
-            }
-        } else {
-            _consecutive_rejections = 0; // Reset counter on good reading
+    // Step 1: Collect data for 100 milliseconds.
+    while (millis() - startTime < sampling_duration_ms) {
+        float dist = getDistance(Unit::CM);
+        if (dist > 0) { // Only store valid readings.
+            readings.push_back(dist);
         }
-        _lastReadings.erase(_lastReadings.begin());
+        delay(sample_interval_ms);
     }
-    _lastReadings.push_back(measurement);
 
-    // (Re)Initialize or Update Kalman Filter
-    if (!_kalman_initialized) {
-        _kalman_x = measurement;
-        _kalman_P = 1.0;
-        _kalman_initialized = true;
-        _lastReadings.assign(_reading_window_size, measurement);
-        return _kalman_x;
+    // Step 2: If no valid data was collected, return an error.
+    if (readings.empty()) {
+        return -1.0f;
     }
-    
-    // Standard Kalman Filter Update
-    // Q: Process noise covariance. How much we trust the process model.
-    //    A smaller Q means the sensor is assumed to be more stable.
-    // R: Measurement noise covariance. How much we trust the current measurement.
-    //    A smaller R means the raw readings are considered more reliable.
-    float P_pred = _kalman_P + _kalman_Q;
-    float K = P_pred / (P_pred + _kalman_R); // Kalman Gain
-    _kalman_x = _kalman_x + K * (measurement - _kalman_x);
-    _kalman_P = (1 - K) * P_pred;
 
-    return _kalman_x;
-}
-
-Status ZlabUltrasonic::getStatus() const {
-    return _currentStatus;
+    // Step 3: Calculate and return the average of the valid readings.
+    float sum = 0;
+    for (float r : readings) {
+        sum += r;
+    }
+    return sum / readings.size();
 }

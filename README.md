@@ -1,77 +1,172 @@
-# Robust Ultrasonic Sensor Library for ESP32
+# 📡 ZlabUltrasonic – Advanced HC-SR04 Arduino Library
 
-A professional, robust C++ library for the HC-SR04 ultrasonic distance sensor, optimized for the ESP32 platform. This library is designed for high accuracy and stability, especially in dynamic environments where noise and sudden changes are common.
-
-This project was developed as part of the Z-Lab scientific qualification assessment, with a focus on clean code, advanced filtering techniques, and a systematic debugging process.
-
----
-
-## ✨ Key Features
-
-* **High-Precision Timing:** Uses the ESP32's high-resolution hardware timer (`esp_timer_get_time()`) instead of the standard, blocking `pulseIn()` for more accurate and non-disruptive measurements.
-* **Advanced Noise Reduction:** Implements a **Kalman Filter** to provide a smoothed, responsive, and highly stable distance reading, minimizing sensor noise.
-* **Intelligent Outlier Rejection:** Features a smart filtering mechanism that detects and rejects random outlier readings. It can distinguish between actual noise and a legitimate, large change in distance, preventing the filter from getting "stuck."
-* **Temperature Compensation:** Includes a method to set the ambient temperature, which adjusts the speed of sound calculation for higher absolute accuracy in different conditions.
-* **Clean, Object-Oriented Design:** Written in C++ with a clear, modular, and well-documented class structure, making it easy to integrate and extend.
+<div align="center">
+🎯 **Accurate • Robust • Easy-to-Use**  
+Measure distances with **HC-SR04** like a pro!  
+Includes **temperature compensation**, **moving average filtering**, and **interactive test menu**.
+</div>
 
 ---
 
-## 🛠️ Hardware Requirements
+🎥 **Demo Video**  
+<p align="center">
+  <a href="Test/video.mp4"><img src="Images/demo_thumbnail.png" width="600" alt="Demo Video"></a>  
+  <i>Click to watch the ultrasonic sensor in action!</i>
+</p>
 
-* An ESP32-based development board (e.g., ESP32-DevKitC, ESP32-S3).
-* HC-SR04 Ultrasonic Sensor.
-* **(Recommended)** A 0.1µF (100nF) ceramic capacitor to place across the sensor's VCC and GND pins for power supply decoupling.
-* Jumper wires.
+---
+
+## 📖 Table of Contents
+- 🌟 [Overview](#-overview)
+- ⚡ [Key Features](#-key-features)
+- 📊 [Technical Details](#-technical-details)
+- 🎯 [What Makes This Special](#-what-makes-this-special)
+- 📂 [Repository Structure](#-repository-structure)
+- 🚀 [Getting Started](#-getting-started)
+- 💻 [Example Output](#-example-output)
+- 📚 [Documentation](#-documentation)
+- 🤝 [Contributing](#-contributing)
+- 📄 [License](#-license)
+
+---
+
+## 🌟 Overview
+**ZlabUltrasonic** is a modern, well-documented C++ Arduino library for the **HC-SR04 ultrasonic distance sensor**.  
+It goes beyond basic distance measurement by adding:
+- Ambient temperature compensation for speed-of-sound accuracy
+- Noise reduction using moving averages
+- Built-in object detection logic
+- Interactive serial monitor control panel for testing
+
+Perfect for robotics, automation, and educational projects.
+
+---
+
+## ⚡ Key Features
+✅ **Simple API** – Just create a sensor object and call `.getDistance()`  
+🌡 **Temperature Compensation** – Adjusts speed of sound for accuracy  
+📉 **Noise Filtering** – `getMovingAverageDistance()` for smooth readings  
+🎯 **Threshold Detection** – `.isObjectDetected()` for presence sensing  
+🖥 **Interactive Menu** – Change modes without re-uploading code  
+📏 **Supports CM & Inches** – Flexible unit output
+
+---
+
+## 📊 Technical Details
+
+| Feature                | Description |
+|------------------------|-------------|
+| **Sensor**             | HC-SR04 Ultrasonic |
+| **MCU**                | Any Arduino-compatible board |
+| **Pins Required**      | TRIG (output), ECHO (input) |
+| **Temperature Input**  | User-provided via `setTemperature()` |
+| **Max Range**          | ~4 meters (sensor-dependent) |
+| **Resolution**         | ~0.3 cm |
+| **Timeout**            | 30 ms (prevents blocking) |
+| **Filtering**          | Moving average over 100 ms |
+| **Units**              | Centimeters or Inches |
+
+---
+
+## 🎯 What Makes This Special
+- 🏎 **Fast & Non-Blocking**: Optimized pulse reading with timeout  
+- 🎓 **Educational**: Clear, commented source code for learning sensor programming  
+- 🔌 **Drop-In Ready**: Minimal setup for beginners, flexibility for experts  
+- 📏 **Accurate**: Adjusts for ambient temperature to improve measurements  
+- 🛡 **Error Handling**: Returns negative values on timeout or invalid readings
+
+---
+
+## 📂 Repository Structure
+📦 ZlabUltrasonic
+┣ 📂 src
+┃ ┣ 📜 ZlabUltrasonic.h # Library header
+┃ ┗ 📜 ZlabUltrasonic.cpp # Library implementation
+┣ 📂 examples
+┃ ┗ 📜 main.cpp # Interactive test program
+┣ 📂 Test
+┃ ┗ 📜 video.mp4 # Demo video
+┣ 📂 Images
+┃ ┗ 📜 demo_thumbnail.png # Video thumbnail
+┣ 📜 LICENSE
+┗ 📜 README.md
 
 ---
 
 ## 🚀 Getting Started
 
-This project is built using **PlatformIO**.
+### 1️⃣ Hardware Setup
+- Connect **TRIG pin** of HC-SR04 → Arduino **D5**
+- Connect **ECHO pin** of HC-SR04 → Arduino **D6**
+- Power sensor with **+5V** and **GND**
 
-1.  **Clone the repository:**
-    ```bash
-    git clone [https://github.com/YourUsername/YourRepositoryName.git](https://github.com/YourUsername/YourRepositoryName.git)
-    ```
-2.  **Open in VS Code:** Open the cloned folder in Visual Studio Code with the PlatformIO extension installed.
-3.  **Build & Upload:** PlatformIO will automatically handle dependencies. Use the PlatformIO controls to build and upload the project to your ESP32.
+### 2️⃣ Installation
+- Copy `ZlabUltrasonic.h` and `ZlabUltrasonic.cpp` into your Arduino `libraries/ZlabUltrasonic` folder
+- Restart Arduino IDE
 
----
-
-## ⚙️ How to Use (API)
-
-Here is a basic example of how to use the library in your `main.cpp`.
-
+### 3️⃣ Example Code
 ```cpp
-#include <Arduino.h>
-#include "ZlabUltrasonic.h" // Include the library
+#include "ZlabUltrasonic.h"
 
-// Define the pins connected to the sensor
-#define TRIG_PIN 26
-#define ECHO_PIN 25
-
-// Create an instance of the sensor library
-ZlabUltrasonic mySensor(TRIG_PIN, ECHO_PIN);
+ZlabUltrasonic sensor(5, 6); // TRIG, ECHO
 
 void setup() {
     Serial.begin(115200);
-    
-    // For best accuracy, set the current ambient temperature
-    mySensor.setTemperature(25.0); // Set to 25°C
+    sensor.setTemperature(25.0); // Optional: adjust for ambient temp
 }
 
 void loop() {
-    // Get the simple, raw distance reading
-    float rawDistance = mySensor.getDistance();
-    
-    // Get the highly stable, filtered distance reading
-    float filteredDistance = mySensor.getFilteredDistance();
-
-    Serial.print("Raw Distance: ");
-    Serial.print(rawDistance, 2);
-    Serial.print(" cm   |   Filtered Distance: ");
-    Serial.print(filteredDistance, 2);
-    Serial.println(" cm");
-
+    float distance = sensor.getDistance(Unit::CM);
+    if (distance > 0) {
+        Serial.print("Distance: ");
+        Serial.print(distance);
+        Serial.println(" cm");
+    } else {
+        Serial.println("Error reading sensor");
+    }
     delay(500);
 }
+💻 Example Output
+Mode 1 – Distance Measurement
+
+makefile
+Copy
+Edit
+Distance: 25.42 cm
+Distance: 25.38 cm
+Distance: 25.41 cm
+Mode 2 – Object Detection (30cm threshold)
+
+css
+Copy
+Edit
+Checking for object within 30 cm... OBJECT DETECTED ✔
+Checking for object within 30 cm... No object found ✖
+Mode 3 – Moving Average
+
+yaml
+Copy
+Edit
+Raw: 25.40 cm | Filtered: 25.38 cm
+📚 Documentation
+getDistance(Unit unit = Unit::CM) → Returns measured distance
+
+isObjectDetected(float threshold_cm) → Checks if object is within threshold
+
+getMovingAverageDistance(int sample_interval_ms = 10) → Returns stable average distance
+
+setTemperature(float tempC) → Adjusts for environmental conditions
+
+🤝 Contributing
+We welcome contributions!
+
+Open issues for bugs or feature requests
+
+Fork the repo, create a branch, and submit a PR
+
+Improve docs, add examples, or optimize code
+
+📄 License
+This project is licensed under the MIT License – see LICENSE for details.
+
+<div align="center"> 💡 **Tip:** Star ⭐ this repo if you found it useful! 📢 Share with friends building robots or automation projects. </div> ```
