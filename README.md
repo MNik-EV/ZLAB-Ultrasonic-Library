@@ -8,20 +8,12 @@ Includes **temperature compensation**, **moving average filtering**, and **inter
 
 ---
 
-🎥 **Demo Video**  
-<p align="center">
-  <a href="Test/video.mp4"><img src="Images/demo_thumbnail.png" width="600" alt="Demo Video"></a>  
-  <i>Click to watch the ultrasonic sensor in action!</i>
-</p>
-
----
-
 ## 📖 Table of Contents
 - 🌟 [Overview](#-overview)
 - ⚡ [Key Features](#-key-features)
 - 📊 [Technical Details](#-technical-details)
 - 🎯 [What Makes This Special](#-what-makes-this-special)
-- 📂 [Repository Structure](#-repository-structure)
+- 🖼️ [Gallery](#-gallery)
 - 🚀 [Getting Started](#-getting-started)
 - 💻 [Example Output](#-example-output)
 - 📚 [Documentation](#-documentation)
@@ -77,19 +69,19 @@ Perfect for robotics, automation, and educational projects.
 
 ---
 
-## 📂 Repository Structure
-📦 ZlabUltrasonic
-┣ 📂 src
-┃ ┣ 📜 ZlabUltrasonic.h # Library header
-┃ ┗ 📜 ZlabUltrasonic.cpp # Library implementation
-┣ 📂 examples
-┃ ┗ 📜 main.cpp # Interactive test program
-┣ 📂 Test
-┃ ┗ 📜 video.mp4 # Demo video
-┣ 📂 Images
-┃ ┗ 📜 demo_thumbnail.png # Video thumbnail
-┣ 📜 LICENSE
-┗ 📜 README.md
+## 🖼️ Gallery
+
+**1️⃣ Wiring Setup – Sensor Placement & Distance**  
+<p align="center">
+  <img src="Images/wiring_setup.png" width="500" alt="HC-SR04 Wiring Diagram"/>
+  <br><i>HC-SR04 connected to Arduino (D5 = TRIG, D6 = ECHO)</i>
+</p>
+
+**2️⃣ Serial Monitor – Live Output**  
+<p align="center">
+  <img src="Images/serial_monitor.png" width="600" alt="Serial Monitor Output"/>
+  <br><i>Example output from interactive test menu</i>
+</p>
 
 ---
 
@@ -126,47 +118,3 @@ void loop() {
     }
     delay(500);
 }
-💻 Example Output
-Mode 1 – Distance Measurement
-
-makefile
-Copy
-Edit
-Distance: 25.42 cm
-Distance: 25.38 cm
-Distance: 25.41 cm
-Mode 2 – Object Detection (30cm threshold)
-
-css
-Copy
-Edit
-Checking for object within 30 cm... OBJECT DETECTED ✔
-Checking for object within 30 cm... No object found ✖
-Mode 3 – Moving Average
-
-yaml
-Copy
-Edit
-Raw: 25.40 cm | Filtered: 25.38 cm
-📚 Documentation
-getDistance(Unit unit = Unit::CM) → Returns measured distance
-
-isObjectDetected(float threshold_cm) → Checks if object is within threshold
-
-getMovingAverageDistance(int sample_interval_ms = 10) → Returns stable average distance
-
-setTemperature(float tempC) → Adjusts for environmental conditions
-
-🤝 Contributing
-We welcome contributions!
-
-Open issues for bugs or feature requests
-
-Fork the repo, create a branch, and submit a PR
-
-Improve docs, add examples, or optimize code
-
-📄 License
-This project is licensed under the MIT License – see LICENSE for details.
-
-<div align="center"> 💡 **Tip:** Star ⭐ this repo if you found it useful! 📢 Share with friends building robots or automation projects. </div> ```
