@@ -118,6 +118,9 @@ void loop() {
     }
     delay(500);
 }
+
+---
+---
 ## 💻 Example Output
 
 **Mode 1 – Distance Measurement**  
