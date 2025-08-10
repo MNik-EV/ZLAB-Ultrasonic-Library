@@ -1,90 +1,116 @@
 #include <Arduino.h>
 #include "ZlabUltrasonic.h"
 
-// =======================================================
-//                  Select The Test Mode
-// 1: Raw Pulse Duration Test (Hardware & Timing Check)
-// 2: Raw Distance Test (Calculation & Unit Check)
-// 3: Full Filtered Test with Debug Prints
-#define TEST_MODE 3
-// =======================================================
-
-
 // --- Pin Definitions ---
-// Make sure these pins match your wiring
 #define TRIG_PIN 5
 #define ECHO_PIN 6
 
+// --- ANSI Color Codes for a beautiful terminal ---
+#define COLOR_RESET  "\x1B[0m"
+#define COLOR_RED    "\x1B[31m"
+#define COLOR_GREEN  "\x1B[32m"
+#define COLOR_YELLOW "\x1B[33m"
+#define COLOR_BLUE   "\x1B[34m"
+#define COLOR_CYAN   "\x1B[36m"
+#define COLOR_WHITE  "\x1B[37m"
 
 // --- Global Sensor Object ---
 ZlabUltrasonic mySensor(TRIG_PIN, ECHO_PIN);
 
+// --- Global state for the interactive menu ---
+int currentMode = 0;
+
+void printMenu() {
+    Serial.println("\n\n-----------------------------------------------------");
+    Serial.println(COLOR_CYAN "         ZLAB Interactive Sensor Interface" COLOR_RESET);
+    Serial.println("-----------------------------------------------------");
+    Serial.println(COLOR_BLUE "Select an operation mode:" COLOR_RESET);
+    Serial.println(COLOR_YELLOW "  1." COLOR_WHITE " Raw Pulse Duration Test (Hardware & Timing Check)");
+    Serial.println(COLOR_YELLOW "  2." COLOR_WHITE " Simple Distance Test (cm & inch)");
+    Serial.println(COLOR_YELLOW "  3." COLOR_WHITE " Advanced Filtered Reading Test");
+    Serial.print("\nEnter mode number (1-3): " COLOR_GREEN);
+}
 
 void setup() {
     Serial.begin(115200);
-    // This loop is important for boards with native USB (like ESP32-S3)
-    // It waits until the Serial Monitor is open before printing.
     while (!Serial) {
         delay(10);
     }
-
-    // Set a known temperature for consistent calculations
-    mySensor.setTemperature(25.0); 
-    
-    Serial.println("\n--- ZLAB Sensor Debug Mode ---");
-    Serial.print("Current Test Mode: ");
-    Serial.println(TEST_MODE);
-    Serial.println("------------------------------------");
+    mySensor.setTemperature(25.0);
+    printMenu();
 }
 
 void loop() {
-#if TEST_MODE == 1
-    // Test 1: Reads the raw pulse duration in microseconds.
-    // GOAL: To verify the hardware and the core timing function (_getRawPulseDuration).
-    // NOTE: For this test to work, you must temporarily move the `_getRawPulseDuration()`
-    // function from the `private` to the `public` section of your ZlabUltrasonic.h file.
-
-    long duration = mySensor._getRawPulseDuration();
-    Serial.print("Raw Pulse Duration: ");
-    Serial.print(duration);
-    Serial.println(" us");
-
-#elif TEST_MODE == 2
-    // Test 2: Reads the raw distance and corrects the inch conversion bug.
-    // GOAL: To verify the distance calculation logic.
-    
-    float distance_cm = mySensor.getDistance("cm");
-
-    if (distance_cm > 0) {
-        // Calculate inches from the SAME reading to avoid inconsistency.
-        float distance_inch = distance_cm / 2.54; 
-        
-        Serial.print("Simple Distance: ");
-        Serial.print(distance_cm, 2); // Print with 2 decimal places
-        Serial.print(" cm  |  ");
-        Serial.print(distance_inch, 2); // Print with 2 decimal places
-        Serial.println(" inch");
-    } else {
-        Serial.println("Error: Could not read distance.");
+    // Check for user input to change mode
+    if (Serial.available() > 0) {
+        char input = Serial.read();
+        if (input >= '1' && input <= '3') {
+            currentMode = input - '0'; // Convert char '1' to int 1, etc.
+            Serial.println(currentMode);
+            Serial.print(COLOR_GREEN "\n--- Starting Mode ");
+            Serial.print(currentMode);
+            Serial.println(" ---" COLOR_RESET);
+            delay(500); // Give user time to see the mode change
+        } else {
+            // Ignore other characters but clear the buffer
+            while(Serial.available()) Serial.read();
+        }
     }
 
-#elif TEST_MODE == 3
-    // Test 3: Full test with debug output for the filter.
-    // GOAL: To see the values inside the filter and the outlier rejection logic.
-    // NOTE: This test will require adding temporary Serial.print statements inside
-    // the ZlabUltrasonic.cpp file to be useful.
-    
-    float raw_dist = mySensor.getDistance("cm");
-    float filtered_dist = mySensor.getFilteredDistance();
+    // Execute the selected mode
+    switch (currentMode) {
+        case 1: {
+            long duration = mySensor.getRawPulseDuration();
+            if (mySensor.getStatus() == Status::TIMEOUT_ERROR) {
+                Serial.println(COLOR_RED "Error: Timeout! Sensor is not connected or not detecting echo." COLOR_RESET);
+            } else {
+                Serial.print(COLOR_WHITE "Raw Pulse Duration: " COLOR_GREEN);
+                Serial.print(duration);
+                Serial.println(" us" COLOR_RESET);
+            }
+            delay(250);
+            break;
+        }
 
-    Serial.print("Raw: ");
-    Serial.print(raw_dist, 2);
-    Serial.print(" cm  |  Filtered: ");
-    Serial.print(filtered_dist, 2);
-    Serial.println(" cm");
+        case 2: {
+            float distance_cm = mySensor.getDistance(Unit::CM);
+            if (mySensor.getStatus() == Status::TIMEOUT_ERROR) {
+                Serial.println(COLOR_RED "Error: Could not read distance (Timeout)." COLOR_RESET);
+            } else {
+                float distance_inch = distance_cm / 2.54;
+                Serial.print(COLOR_WHITE "Simple Distance: " COLOR_GREEN);
+                Serial.print(distance_cm, 2);
+                Serial.print(" cm" COLOR_RESET "  |  ");
+                Serial.print(COLOR_GREEN);
+                Serial.print(distance_inch, 2);
+                Serial.println(" inch" COLOR_RESET);
+            }
+            delay(250);
+            break;
+        }
 
-#endif
+        case 3: {
+            float raw_dist = mySensor.getDistance(Unit::CM);
+            // We call getFilteredDistance *after* getDistance to ensure status is fresh
+            float filtered_dist = mySensor.getFilteredDistance(); 
 
-    // A small delay between measurements
-    delay(500); 
+            if (mySensor.getStatus() == Status::TIMEOUT_ERROR) {
+                Serial.println(COLOR_RED "Error: Could not read distance (Timeout)." COLOR_RESET);
+            } else {
+                Serial.print(COLOR_WHITE "Raw: " COLOR_YELLOW);
+                Serial.print(raw_dist, 2);
+                Serial.print(" cm" COLOR_RESET "  |  ");
+                Serial.print(COLOR_WHITE "Filtered: " COLOR_GREEN);
+                Serial.print(filtered_dist, 2);
+                Serial.println(" cm" COLOR_RESET);
+            }
+            delay(100); // Faster updates for filter testing
+            break;
+        }
+
+        default:
+            // Do nothing, wait for user to select a mode
+            delay(100);
+            break;
+    }
 }
