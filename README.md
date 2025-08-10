@@ -97,6 +97,7 @@ Perfect for robotics, automation, and educational projects.
 - Restart Arduino IDE
 
 ### 3️⃣ Example Code
+
 ```cpp
 #include "ZlabUltrasonic.h"
 
@@ -118,7 +119,7 @@ void loop() {
     }
     delay(500);
 }
-
+```
 
 ---
 
@@ -142,27 +143,15 @@ void loop() {
 - `setTemperature(float tempC)` → Adjusts calculations for ambient temperature.  
   **Parameters:**  
   &nbsp;&nbsp;`tempC` – Ambient temperature in Celsius.
-
----
-
-## 🤝 Contributing
-
-We welcome contributions from the community!  
-You can help by:
-- Opening issues for bugs or feature requests.
-- Forking the repository, creating a branch, and submitting a pull request.
-- Improving documentation, adding new examples, or optimizing the code.
-
----
-
-## 📄 License
+  ## 📄 License
 
 This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
 
 ---
 
 <div align="center">
-⭐ **If you found this project useful, consider giving it a star on GitHub!**
+⭐ <b>If you found this project useful, consider giving it a star on GitHub!</b>
 </div>
+
 
 
