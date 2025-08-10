@@ -118,41 +118,65 @@ void loop() {
     }
     delay(500);
 }
----
-##💻 Example Output
-Mode 1 – Distance Measurement
+## 💻 Example Output
 
-
+**Mode 1 – Distance Measurement**  
+Real-time distance readings in the selected unit (Centimeters or Inches):
 Distance: 25.42 cm
 Distance: 25.38 cm
 Distance: 25.41 cm
-Mode 2 – Object Detection (30cm threshold)
-
-
+**Mode 2 – Object Detection (30 cm threshold)**  
+Indicates whether an object is within the specified detection range:
 Checking for object within 30 cm... OBJECT DETECTED ✔
 Checking for object within 30 cm... No object found ✖
-Mode 3 – Moving Average
 
+**Mode 3 – Moving Average**  
+Compares the raw single measurement with the filtered moving average reading:
 Raw: 25.40 cm | Filtered: 25.38 cm
+
 ---
-##📚 Documentation
-getDistance(Unit unit = Unit::CM) → Returns measured distance
 
-isObjectDetected(float threshold_cm) → Checks if object is within threshold
+## 📚 Documentation
 
-getMovingAverageDistance(int sample_interval_ms = 10) → Returns stable average distance
+- `getDistance(Unit unit = Unit::CM)` → Returns measured distance.  
+  **Parameters:**  
+  &nbsp;&nbsp;`unit` – Unit of measurement (`Unit::CM` or `Unit::INCH`).  
+  **Returns:** Positive float for valid reading, negative value on error.
 
-setTemperature(float tempC) → Adjusts for environmental conditions
+- `isObjectDetected(float threshold_cm)` → Checks if an object is within the given distance.  
+  **Parameters:**  
+  &nbsp;&nbsp;`threshold_cm` – Threshold distance in centimeters.  
+  **Returns:** `true` if object detected within range, otherwise `false`.
+
+- `getMovingAverageDistance(int sample_interval_ms = 10)` → Returns stable average distance from multiple readings.  
+  **Parameters:**  
+  &nbsp;&nbsp;`sample_interval_ms` – Delay between samples in milliseconds (default: 10 ms).  
+  **Returns:** Positive float for valid reading, negative value on error.
+
+- `setTemperature(float tempC)` → Adjusts calculations for ambient temperature.  
+  **Parameters:**  
+  &nbsp;&nbsp;`tempC` – Ambient temperature in Celsius.
+
 ---
-##🤝 Contributing
-We welcome contributions!
 
-Open issues for bugs or feature requests
+## 🤝 Contributing
 
-Fork the repo, create a branch, and submit a PR
+We welcome contributions from the community!  
+You can help by:
+- Opening issues for bugs or feature requests.
+- Forking the repository, creating a branch, and submitting a pull request.
+- Improving documentation, adding new examples, or optimizing the code.
 
-Improve docs, add examples, or optimize code
 ---
-##📄 License
-This project is licensed under the MIT License – see LICENSE for details.
+
+## 📄 License
+
+This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
+
 ---
+
+<div align="center">
+⭐ **If you found this project useful, consider giving it a star on GitHub!**
+</div>
+
+
